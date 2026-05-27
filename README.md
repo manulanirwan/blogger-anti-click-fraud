@@ -213,10 +213,3 @@ CSS
 display: none !important; completely collapses the container so the ad space is removed from view.
 
 pointer-events: none !important; ensures that even if any residual pixel elements linger, mouse clicks will pass through them transparently, rendering further click attacks impossible.
-
-Code output
-Files generated successfully.
-
-```html
-<div class="protected-ad">
-    </div>
