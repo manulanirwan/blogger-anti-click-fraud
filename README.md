@@ -1,4 +1,4 @@
-"""# Universal Ad Click Fraud Protection for Blogger
+Universal Ad Click Fraud Protection for Blogger
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform: Blogger](https://img.shields.io/badge/Platform-Blogger-orange.svg)](https://www.blogger.com)
