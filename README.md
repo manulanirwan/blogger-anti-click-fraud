@@ -92,3 +92,116 @@ Files generated successfully.
     });
 })();
 </script>
+
+Click the Save icon (floppy disk) in the top right.
+
+Step 2: Wrap Non-AdSense Network Codes
+For any ad network other than Google AdSense or Ezoic, you must wrap their script tags in a protected-ad container when placing them into your blog widgets or posts:
+
+HTML
+<div class="protected-ad">
+    </div>
+
+🔧 CustomizationYou can easily modify the behavior of the script by editing these two variables at the top of the code:VariableDefault ValueDescriptionmaxClicks3The maximum number of clicks a user can make across all ads before being blocked.blockHours24How many hours the ads will stay hidden from that specific user.🛑 Limitations & Best PracticesIncognito/Private Browsing: Since this solution relies on browser localStorage, if an attacker uses Incognito mode or clears their browser cookies/storage, their click counter resets.VPN/IP Changes: Unlike server-side setups, this client-side code blocks the browser, not the IP. This is highly effective against individual trolls clicking repeatedly, but less effective against automated distributed botnets.Reporting: If using AdSense, always report significant spikes in invalid traffic using the official Google AdSense Invalid Clicks Contact Form to create a paper trail defending your account status.📄 LicenseThis project is licensed under the MIT License - see the LICENSE file for details."""js_content = """// Universal Ad Click Fraud Protection for Blogger// Keeps your ad network accounts safe from Click Bombing / Invalid Traffic (IVT)(function() {// === CONFIGURATION ===var maxClicks = 3;       // Maximum allowed clicks per user per dayvar blockHours = 24;     // Duration to hide ads from attackers (in hours)// =====================// Selectors for auto-detected networks + custom protected wrapper class
+var adSelectors = '.protected-ad, .adsbygoogle, ins.adsbygoogle, iframe[id^="aswift"], [id^="div-gpt-ad"], .ezoic-ad, .taboola-ad';
+
+// 1. Check if the user is currently under a block penalty
+var blockTime = localStorage.getItem('global_ad_block_time');
+if (blockTime) {
+    var hoursPassed = (new Date().getTime() - blockTime) / (1000 * 60 * 60);
+    if (hoursPassed < blockHours) {
+        // Forcefully hide all ad units from the attacker's DOM layout
+        var style = document.createElement('style');
+        style.innerHTML = adSelectors + ' { display: none !important; opacity: 0 !important; pointer-events: none !important; }';
+        document.head.appendChild(style);
+        return; 
+    } else {
+        // Block duration expired, reset metrics for clean slate
+        localStorage.removeItem('global_ad_block_time');
+        localStorage.setItem('global_ad_click_count', '0');
+    }
+}
+
+// 2. Track window focus & hover state over targeted elements
+var isOverAd = false;
+document.addEventListener('mouseover', function(e) {
+    if (e.target.closest && e.target.closest(adSelectors)) {
+        isOverAd = true;
+    } else {
+        isOverAd = false;
+    }
+});
+
+// 3. Intercept iframe interactions via window blur tracking
+window.addEventListener('blur', function() {
+    if (isOverAd) {
+        var currentClicks = parseInt(localStorage.getItem('global_ad_click_count') || '0', 10);
+        currentClicks++;
+        localStorage.setItem('global_ad_click_count', currentClicks);
+
+        // 4. Trigger penalty protocol if clicks exceed maximum threshold
+        if (currentClicks >= maxClicks) {
+            localStorage.setItem('global_ad_block_time', new Date().getTime());
+            
+            var style = document.createElement('style');
+            style.innerHTML = adSelectors + ' { display: none !important; opacity: 0 !important; pointer-events: none !important; }';
+            document.head.appendChild(style);
+        }
+        isOverAd = false;
+    }
+});
+})();"""with open("README.md", "w", encoding="utf-8") as f:f.write(readme_content)with open("anti-click-fraud.js", "w", encoding="utf-8") as f:f.write(js_content)print("Files generated successfully.")
+
+🔬 Core Concepts: How the Technical Mechanics Work
+If developers ask issues or comment on your code inside GitHub, you can explain the core architecture using these principles:
+
+1. The Cross-Origin Iframe Barrier
+Modern web browsers enforce strict security rules via the Same-Origin Policy. Because ad networks serve their banners inside an HTML <iframe> hosted on an external server (like googleads.g.doubleclick.net or adsterra.com), your main Blogger site cannot read what is happening inside that iframe. You cannot attach a standard JavaScript addEventListener('click') to an ad wrapper and register when a mouse button is pressed down.
+
+2. The Focus Trick (window.blur)
+To get around the cross-origin restriction, this tool relies on tracking browser window focus shifts.
+
+When a visitor views your blog, the main window has user focus.
+
+When a user clicks anywhere inside an ad iframe, the browser treats that iframe as its own independent window, causing the parent window to instantly lose focus.
+
+The script listens for this frame shift using the global window.blur event listener.
+
+3. Combining Mouse Tracking with Blur Events
+A blur event can happen for multiple reasons (e.g., a user clicks the address bar, hits Alt+Tab, or clicks a browser extension). To prevent false positives, the script couples window blur events with continuous structural hover tracking:
+
+JavaScript
+// 1. Tracks if user's pointer sits directly on an ad zone
+document.addEventListener('mouseover', function(e) {
+    if (e.target.closest(adSelectors)) {
+        isOverAd = true;
+    } else {
+        isOverAd = false;
+    }
+});
+
+// 2. Only counts a blur as a valid ad click if the pointer is currently hovering over an ad zone
+window.addEventListener('blur', function() {
+    if (isOverAd) {
+        // Increment invalid traffic counters
+    }
+});
+4. Mitigation via Global CSS Injection
+Once a malicious user crosses the threshold configured in maxClicks, the code stops processing tracking counters and executes an active penalty block. Instead of modifying every single HTML element one by one (which can cause layout issues or performance lag), it injects a raw global CSS stylesheet directly into the webpage header:
+
+CSS
+.protected-ad, .adsbygoogle { 
+    display: none !important; 
+    opacity: 0 !important; 
+    pointer-events: none !important; 
+}
+display: none !important; completely collapses the container so the ad space is removed from view.
+
+pointer-events: none !important; ensures that even if any residual pixel elements linger, mouse clicks will pass through them transparently, rendering further click attacks impossible.
+
+Code output
+Files generated successfully.
+
+```html
+<div class="protected-ad">
+    </div>
